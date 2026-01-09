@@ -3,12 +3,20 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { Wallet, FileText, LogOut, User, Menu } from 'lucide-react'
+import { Wallet, FileText, LogOut, User, Menu, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { signOut } from '@/app/actions/auth'
 import { useSidebar } from '@/hooks/use-sidebar-state'
 
-import { Logo } from '@/components/ui/logo'
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface SidebarProps {
     user: {
@@ -35,6 +43,9 @@ export function AppSidebar({ user }: SidebarProps) {
     const pathname = usePathname()
     const { isOpen, toggle } = useSidebar()
 
+    // Extracting user name from metadata or using email prefix
+    const userName = (user as any)?.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuário'
+
     return (
         <>
             {/* Mobile Trigger */}
@@ -53,11 +64,9 @@ export function AppSidebar({ user }: SidebarProps) {
                     "p-8 h-24 flex items-center transition-all duration-300",
                     !isOpen && "md:p-0 md:justify-center"
                 )}>
-                    <Logo
-                        variant={isOpen ? "full" : "symbol"}
-                        size={isOpen ? 32 : 36}
-                        className="text-white"
-                    />
+                    <span className="font-jakarta font-bold text-2xl text-white tracking-tight">
+                        {isOpen ? "NOMO" : "N"}
+                    </span>
                 </div>
 
                 <nav className="flex-1 px-4 space-y-1 overflow-hidden">
@@ -78,7 +87,7 @@ export function AppSidebar({ user }: SidebarProps) {
                                 )}
                             >
                                 <Icon className={cn(
-                                    "h-5 w-5 transition-colors",
+                                    "h-5 w-5 min-w-[20px] transition-colors",
                                     isActive ? "text-white" : "text-zinc-400 group-hover:text-zinc-50"
                                 )}
                                 />
@@ -93,39 +102,61 @@ export function AppSidebar({ user }: SidebarProps) {
                     })}
                 </nav>
 
-                <div className="p-4 border-t border-zinc-900 bg-zinc-950 overflow-hidden">
-                    <div className="flex items-center gap-3 px-2 py-3 mb-2">
-                        <div className="h-10 w-10 shrink-0 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center">
-                            <User className="h-5 w-5 text-zinc-400" />
-                        </div>
-                        <div className={cn(
-                            "flex-1 min-w-0 transition-all duration-300",
-                            !isOpen && "md:opacity-0 md:translate-x-4"
-                        )}>
-                            <p className="text-sm font-semibold text-white truncate">
-                                {user.email?.split('@')[0]}
-                            </p>
-                            <p className="text-xs text-zinc-500 truncate">{user.email}</p>
-                        </div>
-                    </div>
-                    <form action={signOut}>
-                        <Button
-                            variant="ghost"
-                            className={cn(
-                                "w-full justify-start gap-3 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-xl px-4",
-                                !isOpen && "md:justify-center md:px-0"
-                            )}
-                            size="sm"
+                <div className="p-4 border-t border-zinc-900">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                className={cn(
+                                    "w-full flex items-center gap-3 px-2 h-auto py-2 hover:bg-zinc-900 rounded-xl transition-all duration-300",
+                                    !isOpen && "justify-center px-0"
+                                )}
+                            >
+                                <Avatar className="h-9 w-9 shrink-0 border border-zinc-800">
+                                    <AvatarImage src={`https://ui-avatars.com/api/?name=${userName}&background=random`} />
+                                    <AvatarFallback className="bg-zinc-800 text-zinc-400">
+                                        {userName.substring(0, 2).toUpperCase()}
+                                    </AvatarFallback>
+                                </Avatar>
+                                {isOpen && (
+                                    <div className="flex-1 text-left min-w-0">
+                                        <p className="text-sm font-medium text-white truncate">
+                                            {userName}
+                                        </p>
+                                    </div>
+                                )}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            side="right"
+                            align="end"
+                            sideOffset={12}
+                            className="w-56 bg-zinc-950 border-zinc-800 text-zinc-200"
                         >
-                            <LogOut className="h-4 w-4" />
-                            <span className={cn(
-                                "transition-all duration-300",
-                                !isOpen && "md:hidden"
-                            )}>
-                                Sair
-                            </span>
-                        </Button>
-                    </form>
+                            <DropdownMenuLabel className="font-normal border-b border-zinc-900 mb-1 pb-2">
+                                <div className="flex flex-col space-y-1">
+                                    <p className="text-sm font-medium leading-none text-white">{userName}</p>
+                                    <p className="text-xs leading-none text-zinc-500 truncate">{user.email}</p>
+                                </div>
+                            </DropdownMenuLabel>
+                            <DropdownMenuItem className="cursor-pointer focus:bg-zinc-900 focus:text-white">
+                                <User className="mr-2 h-4 w-4" />
+                                <span>Perfil</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer focus:bg-zinc-900 focus:text-white">
+                                <Settings className="mr-2 h-4 w-4" />
+                                <span>Configurações</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="bg-zinc-900" />
+                            <DropdownMenuItem
+                                className="text-red-400 focus:text-red-400 focus:bg-red-950/20 cursor-pointer"
+                                onClick={() => signOut()}
+                            >
+                                <LogOut className="mr-2 h-4 w-4" />
+                                <span>Sair</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </aside>
         </>

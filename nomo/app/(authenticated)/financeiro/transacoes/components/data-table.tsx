@@ -35,9 +35,9 @@ export function DataTable<TData, TValue>({
     })
 
     return (
-        <div className="w-full h-full flex flex-col overflow-auto">
+        <div className="rounded-md border w-full h-full overflow-auto relative">
             <Table>
-                <TableHeader className="sticky top-0 bg-background z-10">
+                <TableHeader className="sticky top-0 bg-secondary z-10 shadow-sm">
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header) => {
@@ -62,7 +62,7 @@ export function DataTable<TData, TValue>({
                                 key={row.id}
                                 data-state={row.getIsSelected() && "selected"}
                                 onClick={() => onRowClick?.(row.original)}
-                                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                                className={onRowClick ? "cursor-pointer" : ""}
                             >
                                 {row.getVisibleCells().map((cell) => (
                                     <TableCell key={cell.id}>

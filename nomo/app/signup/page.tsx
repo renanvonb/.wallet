@@ -6,27 +6,21 @@ import { createClient } from '@/lib/supabase/client'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
+import Image from 'next/image'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
-
-import { Logo } from '@/components/ui/logo'
+import { Separator } from '@/components/ui/separator'
+import { Loader2, Eye, EyeOff } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { AuthSkeleton } from '@/components/ui/skeletons'
 
 const signupSchema = z.object({
     name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
     email: z.string().email('E-mail inválido'),
     password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
-    confirmPassword: z.string()
+    confirmPassword: z.string().min(1, 'Confirme sua senha')
 }).refine((data) => data.password === data.confirmPassword, {
     message: "As senhas não coincidem",
     path: ["confirmPassword"],
@@ -37,9 +31,19 @@ type SignupValues = z.infer<typeof signupSchema>
 export default function SignupPage() {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
+    const [initialLoading, setInitialLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const supabase = createClient()
+
+    // Simulate initial loading
+    useState(() => {
+        const timer = setTimeout(() => setInitialLoading(false), 800)
+        return () => clearTimeout(timer)
+    })
+
 
     const {
         register,
@@ -54,7 +58,7 @@ export default function SignupPage() {
         setError(null)
 
         try {
-            const { error } = await supabase.auth.signUp({
+            const { error: signUpError } = await supabase.auth.signUp({
                 email: data.email,
                 password: data.password,
                 options: {
@@ -65,8 +69,8 @@ export default function SignupPage() {
                 },
             })
 
-            if (error) {
-                setError(error.message)
+            if (signUpError) {
+                setError(signUpError.message)
                 return
             }
 
@@ -78,145 +82,201 @@ export default function SignupPage() {
         }
     }
 
+    if (initialLoading) {
+        return <AuthSkeleton />
+    }
+
     if (success) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-4 font-sans">
-                <Card className="w-full max-w-md border-zinc-800 bg-zinc-900/50 backdrop-blur-xl">
-                    <CardHeader className="text-center">
-                        <div className="flex justify-center mb-6">
-                            <Logo variant="symbol" size={48} className="text-white" />
-                        </div>
-                        <CardTitle className="text-2xl font-bold text-white">Verifique seu e-mail</CardTitle>
-                        <CardDescription className="text-zinc-400 mt-2">
-                            Enviamos um link de confirmação para o seu e-mail. Por favor, verifique sua caixa de entrada para ativar sua conta.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardFooter>
-                        <Button asChild variant="outline" className="w-full border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800">
-                            <Link href="/login">Voltar para o login</Link>
-                        </Button>
-                    </CardFooter>
-                </Card>
+            <div className="flex h-screen w-screen items-center justify-center bg-white p-8 font-inter">
+                <div className="w-full max-w-[400px] text-center space-y-6">
+                    <div className="space-y-2">
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground font-jakarta">
+                            Verifique seu e-mail <span className="font-['Apple_Color_Emoji',_'Segoe_UI_Emoji',_'Segoe_UI_Symbol',_cursive]">📧</span>
+                        </h1>
+                        <p className="text-muted-foreground font-inter">
+                            Enviamos um link de confirmação para o seu e-mail. Por favor, verifique sua caixa de entrada.
+                        </p>
+                    </div>
+                    <Button asChild variant="outline" className="w-full h-11 rounded-md font-inter">
+                        <Link href="/login">Voltar para o login</Link>
+                    </Button>
+                </div>
             </div>
         )
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-4 font-sans">
-            <Card className="w-full max-w-md border-zinc-800 bg-zinc-900/50 backdrop-blur-xl">
-                <CardHeader className="space-y-1 text-center">
-                    <div className="flex items-center mb-6">
-                        <Link href="/login" className="text-zinc-500 hover:text-white transition-colors flex items-center text-sm font-medium group">
-                            <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-                            Voltar
-                        </Link>
+        <div className="flex h-screen w-screen bg-white overflow-hidden font-inter">
+            {/* Left Column: Form (Signup Area - 60%) */}
+            <div className="flex-1 md:w-[60%] md:flex-none flex flex-col items-center justify-center p-8 md:p-12 lg:p-16 bg-white relative">
+                <div className="w-full flex flex-col items-center">
+                    <div className="w-full max-w-[320px] flex flex-col items-center text-center">
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground font-jakarta">
+                            Crie sua conta
+                        </h1>
+                        <Separator className="mt-[24px] mb-[24px] w-full opacity-50" />
                     </div>
-                    <div className="flex justify-center mb-4">
-                        <Logo variant="full" size={40} className="text-white" />
-                    </div>
-                    <CardDescription className="text-zinc-400">
-                        Preencha os dados abaixo para começar no Nomo
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+
+                    <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-[320px] space-y-6">
+                        {/* Name Field */}
                         <div className="space-y-2">
-                            <Label htmlFor="name" className="text-zinc-300">
-                                Nome Completo
+                            <Label
+                                htmlFor="name"
+                                className={cn("font-inter text-sm font-medium", errors.name && "text-destructive")}
+                            >
+                                Nome completo
                             </Label>
                             <Input
                                 id="name"
                                 type="text"
                                 placeholder="Seu nome"
-                                className="border-zinc-800 bg-zinc-950 text-white placeholder:text-zinc-600 focus-visible:ring-zinc-700 h-11 rounded-xl"
+                                className={cn(
+                                    "h-11 px-4 rounded-md border-input bg-background font-inter focus:ring-1 focus:ring-ring",
+                                    errors.name && "border-destructive focus-visible:ring-destructive"
+                                )}
                                 {...register('name')}
                                 disabled={loading}
                             />
-                            {errors.name && (
-                                <p className="text-xs text-red-500">{errors.name.message}</p>
-                            )}
                         </div>
+
+                        {/* Email Field */}
                         <div className="space-y-2">
-                            <Label htmlFor="email" className="text-zinc-300">
+                            <Label
+                                htmlFor="email"
+                                className={cn("font-inter text-sm font-medium", errors.email && "text-destructive")}
+                            >
                                 E-mail
                             </Label>
                             <Input
                                 id="email"
                                 type="email"
                                 placeholder="nome@exemplo.com"
-                                className="border-zinc-800 bg-zinc-950 text-white placeholder:text-zinc-600 focus-visible:ring-zinc-700 h-11 rounded-xl"
+                                className={cn(
+                                    "h-11 px-4 rounded-md border-input bg-background font-inter focus:ring-1 focus:ring-ring",
+                                    errors.email && "border-destructive focus-visible:ring-destructive"
+                                )}
                                 {...register('email')}
                                 disabled={loading}
                             />
-                            {errors.email && (
-                                <p className="text-xs text-red-500">{errors.email.message}</p>
-                            )}
                         </div>
+
+                        {/* Password Field */}
                         <div className="space-y-2">
-                            <Label htmlFor="password" title="password" className="text-zinc-300">
+                            <Label
+                                htmlFor="password"
+                                className={cn("font-inter text-sm font-medium", errors.password && "text-destructive")}
+                            >
                                 Senha
                             </Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                placeholder="••••••••"
-                                className="border-zinc-800 bg-zinc-950 text-white placeholder:text-zinc-600 focus-visible:ring-zinc-700 h-11 rounded-xl"
-                                {...register('password')}
-                                disabled={loading}
-                            />
-                            {errors.password && (
-                                <p className="text-xs text-red-500">{errors.password.message}</p>
-                            )}
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="••••••••"
+                                    className={cn(
+                                        "h-11 pl-4 pr-10 rounded-md border-input bg-background font-inter focus:ring-1 focus:ring-ring",
+                                        errors.password && "border-destructive focus-visible:ring-destructive"
+                                    )}
+                                    {...register('password')}
+                                    disabled={loading}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-all"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                         </div>
+
+                        {/* Confirm Password Field */}
                         <div className="space-y-2">
-                            <Label htmlFor="confirmPassword" title="confirmPassword" className="text-zinc-300">
-                                Confirmar Senha
+                            <Label
+                                htmlFor="confirmPassword"
+                                className={cn("font-inter text-sm font-medium", errors.confirmPassword && "text-destructive")}
+                            >
+                                Confirmar senha
                             </Label>
-                            <Input
-                                id="confirmPassword"
-                                type="password"
-                                placeholder="••••••••"
-                                className="border-zinc-800 bg-zinc-950 text-white placeholder:text-zinc-600 focus-visible:ring-zinc-700 h-11 rounded-xl"
-                                {...register('confirmPassword')}
-                                disabled={loading}
-                            />
-                            {errors.confirmPassword && (
-                                <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>
-                            )}
+                            <div className="relative">
+                                <Input
+                                    id="confirmPassword"
+                                    type={showConfirmPassword ? 'text' : 'password'}
+                                    placeholder="••••••••"
+                                    className={cn(
+                                        "h-11 pl-4 pr-10 rounded-md border-input bg-background font-inter focus:ring-1 focus:ring-ring",
+                                        errors.confirmPassword && "border-destructive focus-visible:ring-destructive"
+                                    )}
+                                    {...register('confirmPassword')}
+                                    disabled={loading}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-all"
+                                >
+                                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                         </div>
+
                         {error && (
-                            <div className="rounded-xl bg-red-500/10 p-3 border border-red-500/20">
-                                <p className="text-center text-sm text-red-500 font-medium">{error}</p>
+                            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                                <p className="text-xs text-destructive font-medium text-center">{error}</p>
                             </div>
                         )}
+
                         <Button
                             type="submit"
-                            className="w-full bg-white text-zinc-950 hover:bg-zinc-200 h-12 rounded-xl font-bold mt-2"
+                            className="w-full h-11 rounded-md font-bold font-inter bg-black text-white hover:bg-black/90 transition-all shadow-lg"
                             disabled={loading}
                         >
                             {loading ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Criando conta...
-                                </>
+                                <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
-                                'Criar Conta'
+                                'Criar conta'
                             )}
                         </Button>
                     </form>
-                </CardContent>
-                <CardFooter className="flex flex-col space-y-4 border-t border-zinc-800 pt-6">
-                    <div className="text-center text-sm text-zinc-500">
+                </div>
+
+                {/* Absolute Footer Navigation */}
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center w-full">
+                    <p className="text-sm font-inter text-muted-foreground">
                         Já tem uma conta?{' '}
-                        <Link
-                            href="/login"
-                            className="text-white hover:underline transition-all font-medium"
-                        >
-                            Entre agora
+                        <Link href="/login" className="text-foreground font-semibold hover:underline decoration-2 underline-offset-4">
+                            Entrar
                         </Link>
-                    </div>
-                </CardFooter>
-            </Card>
+                    </p>
+                </div>
+            </div>
+
+            {/* Right Column: Visual (Brand Area - 40%) */}
+            <div className="hidden md:flex md:w-[40%] relative m-4 rounded-[16px] overflow-hidden p-6">
+                <Image
+                    src="/image_0.png"
+                    alt="Signup Visual"
+                    fill
+                    className="object-cover"
+                    priority
+                />
+
+                {/* Brand Logo in top-left of the card */}
+                <div className="absolute top-6 left-6 z-20">
+                    <span className="text-2xl font-bold font-jakarta tracking-tight text-white">.wallet</span>
+                </div>
+
+                {/* Bottom Gradient Overlay */}
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-10" />
+
+                {/* Footer Info */}
+                <div className="absolute bottom-6 left-6 z-20">
+                    <p className="font-inter text-[14px] text-white/80 font-medium">
+                        © 2025 Wallet. Todos os direitos reservados
+                    </p>
+                </div>
+            </div>
         </div>
     )
 }

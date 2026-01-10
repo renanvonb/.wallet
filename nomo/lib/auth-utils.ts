@@ -21,8 +21,8 @@ export async function getCurrentUserId(): Promise<string> {
         // Como estamos em Server Action, podemos tentar uma rota que não dependa de RLS se o client for admin, 
         // mas aqui vamos assumir que o usuário quer um ID válido para os mocks.
 
-        // Tentativa de buscar ID estável para o mock admin@nomo.com.br
-        const { data: authUser } = await supabase.rpc('get_user_id_by_email', { email_query: 'admin@nomo.com.br' })
+        // Tentativa de buscar ID estável para o mock admin@wallet.com.br
+        const { data: authUser } = await supabase.rpc('get_user_id_by_email', { email_query: 'admin@wallet.com.br' })
         if (authUser) return authUser
 
         if (users && users.length > 0) return users[0].id

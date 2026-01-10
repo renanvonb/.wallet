@@ -7,6 +7,7 @@ import { Wallet, FileText, LogOut, User, Menu, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { signOut } from '@/app/actions/auth'
 import { useSidebar } from '@/hooks/use-sidebar-state'
+import { SidebarSkeleton } from '@/components/ui/skeletons'
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -43,8 +44,13 @@ export function AppSidebar({ user }: SidebarProps) {
     const pathname = usePathname()
     const { isOpen, toggle } = useSidebar()
 
+    if (!user) {
+        return <SidebarSkeleton />
+    }
+
     // Extracting user name from metadata or using email prefix
     const userName = (user as any)?.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuário'
+
 
     return (
         <>
@@ -65,7 +71,7 @@ export function AppSidebar({ user }: SidebarProps) {
                     !isOpen && "md:p-0 md:justify-center"
                 )}>
                     <span className="font-jakarta font-bold text-2xl text-white tracking-tight">
-                        {isOpen ? "NOMO" : "N"}
+                        {isOpen ? ".wallet" : "."}
                     </span>
                 </div>
 

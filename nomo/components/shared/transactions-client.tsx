@@ -11,8 +11,18 @@ import { TransactionSummaryCards } from "@/components/shared/transaction-summary
 import { TransactionForm } from "@/components/shared/transaction-form"
 import { Sheet } from "@/components/ui/sheet"
 import { TimeRange } from "@/app/actions/transactions-fetch"
-import { Loader2 } from "lucide-react"
+import { Loader2, Plus, Search } from "lucide-react"
 import type { Transaction } from "@/app/(authenticated)/financeiro/transacoes/components/columns"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { MonthPicker } from "@/components/ui/month-picker"
 
 interface TransactionsClientProps {
     initialData: any[]
@@ -24,9 +34,26 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
     const [isPending, startTransition] = useTransition()
     const [selectedTransaction, setSelectedTransaction] = React.useState<Transaction | null>(null)
     const [isEditSheetOpen, setIsEditSheetOpen] = React.useState(false)
+    const [isNewSheetOpen, setIsNewSheetOpen] = React.useState(false)
+
+    // Search Debounce state
+    const [searchValue, setSearchValue] = React.useState(searchParams.get('q') || "")
+
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            const params = new URLSearchParams(searchParams.toString())
+            if (searchValue) params.set('q', searchValue)
+            else params.delete('q')
+            router.push(`?${params.toString()}`, { scroll: false })
+        }, 300)
+        return () => clearTimeout(timer)
+    }, [searchValue, router, searchParams])
 
     // Filtros sincronizados com a URL
     const range = (searchParams.get('range') as TimeRange) || 'mes'
+    const searchQuery = searchParams.get('q')?.toLowerCase() || ""
+
+
     const date: DateRange | undefined = React.useMemo(() => {
         const from = searchParams.get('from')
         const to = searchParams.get('to')
@@ -71,8 +98,30 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
         })
     }
 
+    const handleMonthChange = (date: Date) => {
+        startTransition(() => {
+            const params = new URLSearchParams(searchParams.toString())
+            params.set('from', new Date(date.getFullYear(), date.getMonth(), 1).toISOString())
+            params.set('to', new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString())
+            params.set('range', 'custom')
+            router.push(`?${params.toString()}`, { scroll: false })
+        })
+    }
+
+    // Filtragem Client-side reativa
+
+    const filteredData = React.useMemo(() => {
+        if (!searchQuery) return initialData
+        return initialData.filter(t => {
+            const desc = (t.description || "").toLowerCase()
+            const payee = (t.payees?.name || "").toLowerCase()
+            const cat = (t.categories?.name || "").toLowerCase()
+            return desc.includes(searchQuery) || payee.includes(searchQuery) || cat.includes(searchQuery)
+        })
+    }, [initialData, searchQuery])
 
     const handleSuccess = () => {
+
         router.refresh()
         setIsEditSheetOpen(false)
     }
@@ -84,7 +133,7 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
 
 
     const totals = React.useMemo(() => {
-        return initialData.reduce((acc, curr) => {
+        return filteredData.reduce((acc, curr) => {
             const amount = parseFloat(curr.amount as any) || 0
             if (curr.type === 'revenue') acc.income += amount
             else if (curr.type === 'expense') acc.expense += amount
@@ -93,7 +142,8 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
             acc.balance = acc.income - acc.expense - acc.investment
             return acc
         }, { income: 0, expense: 0, investment: 0, balance: 0 })
-    }, [initialData])
+    }, [filteredData])
+
 
     return (
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -106,21 +156,52 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                         <h1 className="text-3xl font-bold tracking-tight text-zinc-950 font-jakarta">
                             Transações
                         </h1>
-                        <p className="text-zinc-500 mt-1 font-sans">
-                            Gerencie suas entradas, saídas e investimentos em um só lugar.
+                        <p className="text-zinc-500 mt-1 font-sans text-sm font-inter">
+                            Gerencie e acompanhe suas movimentações financeiras.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-3 font-sans">
-                        <TransactionFilters
-                            range={range}
-                            onRangeChange={handleRangeChange}
-                            date={date}
-                            onDateChange={handleDateChange}
-                            onTransactionSuccess={handleSuccess}
+                        <Select
+                            value={range}
+                            onValueChange={handleRangeChange}
+                        >
+                            <SelectTrigger className="w-[140px] font-inter">
+                                <SelectValue placeholder="Período" />
+                            </SelectTrigger>
+                            <SelectContent className='bg-white'>
+                                <SelectItem value="dia">Hoje</SelectItem>
+                                <SelectItem value="semana">Semana</SelectItem>
+                                <SelectItem value="mes">Mês Atual</SelectItem>
+                                <SelectItem value="ano">Ano</SelectItem>
+                                <SelectItem value="custom">Personalizado</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <MonthPicker
+                            value={date?.from}
+                            onChange={handleMonthChange}
+                            className="w-[120px]"
                         />
+
+                        <div className="relative w-[320px]">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                            <Input
+                                placeholder="Buscar transações..."
+                                className="pl-9 h-10 font-inter"
+                                value={searchValue}
+                                onChange={(e) => setSearchValue(e.target.value)}
+                            />
+                        </div>
+
+                        <Button onClick={() => setIsNewSheetOpen(true)} className="font-inter font-medium">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Adicionar
+                        </Button>
                     </div>
                 </div>
+
+
 
                 {/* Wrapper de Cards e Tabela com Gap de 16px (gap-4) */}
                 <div className="flex-1 flex flex-col gap-4 overflow-hidden">
@@ -143,11 +224,24 @@ export default function TransactionsClient({ initialData }: TransactionsClientPr
                                         <Loader2 className="h-8 w-8 animate-spin text-zinc-950" />
                                     </div>
                                 )}
-                                <TransactionTable data={initialData} onRowClick={handleRowClick} />
+                                <TransactionTable data={filteredData} onRowClick={handleRowClick} />
                             </>
                         )}
                     </div>
                 </div>
+
+                {/* New Transaction Sheet */}
+                <Sheet open={isNewSheetOpen} onOpenChange={setIsNewSheetOpen}>
+                    <TransactionForm
+                        open={isNewSheetOpen}
+                        onSuccess={() => {
+                            handleSuccess()
+                            setIsNewSheetOpen(false)
+                        }}
+                        onCancel={() => setIsNewSheetOpen(false)}
+                    />
+                </Sheet>
+
             </div>
 
             {/* Edit Sheet */}

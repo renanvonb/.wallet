@@ -13,6 +13,7 @@ import {
     BreadcrumbList,
     BreadcrumbPage,
 } from "@/components/ui/breadcrumb"
+import { TopbarSkeleton } from '@/components/ui/skeletons'
 
 interface NavLink {
     label: string
@@ -21,17 +22,19 @@ interface NavLink {
 
 interface PageHeaderProps {
     links: NavLink[]
+    isLoading?: boolean
 }
 
-export function PageHeader({ links }: PageHeaderProps) {
+export function PageHeader({ links, isLoading }: PageHeaderProps) {
+    if (isLoading) {
+        return <TopbarSkeleton />
+    }
+
     const pathname = usePathname()
     const { isOpen, toggle } = useSidebar()
 
-    // Determine current module name based on path or static "Financeiro"
-    // Since this is used in FinanceLayout, we can default to "Financeiro" 
-    // or derive it from the first segment if we want to be generic.
-    // Requirement: "Breadcrumb deve exibir apenas o nome do módulo atual (ex: Financeiro)" and "estático"
     const moduleName = "Financeiro"
+
 
     return (
         <header className="sticky top-0 z-30 w-full border-b border-zinc-200 bg-white/80 backdrop-blur-md h-16 flex-none font-sans">
@@ -74,10 +77,10 @@ export function PageHeader({ links }: PageHeaderProps) {
                                     key={link.href}
                                     href={link.href}
                                     className={cn(
-                                        'relative h-16 flex items-center px-1 text-sm font-medium transition-colors border-b-2',
+                                        'relative h-16 flex items-center px-1 text-sm font-medium transition-colors border-b-2 font-inter',
                                         isActive
-                                            ? 'text-foreground border-primary'
-                                            : 'text-muted-foreground border-transparent hover:text-foreground'
+                                            ? 'text-zinc-950 border-zinc-950'
+                                            : 'text-zinc-500 border-transparent hover:text-zinc-950'
                                     )}
                                 >
                                     {link.label}
@@ -86,6 +89,7 @@ export function PageHeader({ links }: PageHeaderProps) {
                         })}
                     </nav>
                 </div>
+
 
                 {/* 3. Right: Actions (Theme, Notifications) */}
                 <div className="flex items-center gap-3 justify-end">
@@ -107,6 +111,7 @@ export function PageHeader({ links }: PageHeaderProps) {
                         <Bell className="h-5 w-5" />
                     </Button>
                 </div>
+
             </div>
         </header>
     )

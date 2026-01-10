@@ -1,4 +1,4 @@
-# Nomo
+# .wallet
 
 SaaS de gestão financeira, jurídica e de documentos.
 

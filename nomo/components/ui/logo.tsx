@@ -18,14 +18,14 @@ export function Logo({ variant = "full", size = 32, className }: LogoProps) {
 
     return (
         <div className={cn("flex items-center gap-3 select-none", className)}>
-            {/* Nomo Symbol (PNG) */}
+            {/* .wallet Symbol (PNG) */}
             <div
                 className="relative overflow-hidden"
                 style={{ width: size, height: size }}
             >
                 <Image
                     src="/brand/logo-symbol.png"
-                    alt="Nomo Label"
+                    alt=".wallet Label"
                     width={size}
                     height={size}
                     className={cn(
@@ -37,7 +37,7 @@ export function Logo({ variant = "full", size = 32, className }: LogoProps) {
                 />
             </div>
 
-            {/* Nomo Text */}
+            {/* .wallet Text */}
             {variant === "full" && (
                 <span
                     className="font-sans font-bold tracking-tighter transition-all duration-300"
@@ -47,7 +47,7 @@ export function Logo({ variant = "full", size = 32, className }: LogoProps) {
                         marginTop: '2px'
                     }}
                 >
-                    nomo
+                    .wallet
                 </span>
             )}
         </div>

@@ -148,8 +148,9 @@ export default function ImportTransactionsPage() {
                     description: transaction.descricao,
                     amount: transaction.valor,
                     type: 'expense',
-                    due_date: transaction.data_pagamento,
-                    payment_date: transaction.data_pagamento,
+                    date: transaction.data_pagamento,
+                    competence: transaction.data_pagamento, // Use same date for simplified import
+                    status: 'Realizado',
                     category_id: categoriaData.id,
                     payee_id: payeeId,
                 }

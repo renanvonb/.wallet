@@ -56,10 +56,10 @@ export const columns: ColumnDef<Transaction>[] = [
         },
     },
     {
-        accessorKey: "payment_date",
-        header: () => <div className="min-w-[100px]">Pagamento</div>,
+        accessorKey: "date",
+        header: () => <div className="min-w-[100px]">Data</div>,
         cell: ({ row }) => {
-            const date = row.getValue("payment_date") as string | null
+            const date = row.getValue("date") as string | null
             if (!date) return <span className="text-sm text-muted-foreground">-</span>
             const [year, month, day] = date.split("-")
             return <div className="text-sm">{`${day}/${month}/${year}`}</div>
@@ -97,27 +97,26 @@ export const columns: ColumnDef<Transaction>[] = [
         id: "status",
         header: () => <div className="w-[120px]">Status</div>,
         cell: ({ row }) => {
-            const isPaid = !!row.original.payment_date
-            const dueDate = row.original.due_date
+            const statusValue = row.original.status || "Pendente"
+            const dateStr = row.original.date
 
-            // Simple date comparison using ISO string format (YYYY-MM-DD)
-            const today = new Date().toISOString().split('T')[0]
+            // Logic to refine status based on date if it's currently "Pendente"
+            let refinedStatus: "Pendente" | "Realizado" | "Agendado" | "Atrasado" = statusValue as any
 
-            let status: "Pendente" | "Realizado" | "Agendado" | "Atrasado"
-
-            if (isPaid) {
-                status = "Realizado"
-            } else if (dueDate > today) {
-                status = "Agendado"
-            } else if (dueDate < today) {
-                status = "Atrasado"
-            } else {
-                status = "Pendente"
+            if (statusValue === "Pendente" && dateStr) {
+                const today = new Date().toISOString().split('T')[0]
+                if (dateStr > today) {
+                    refinedStatus = "Agendado"
+                } else if (dateStr < today) {
+                    refinedStatus = "Atrasado"
+                }
+            } else if (statusValue === "Realizado") {
+                refinedStatus = "Realizado"
             }
 
             return (
                 <div className="w-[120px]">
-                    <StatusIndicator status={status} />
+                    <StatusIndicator status={refinedStatus} />
                 </div>
             )
         },

@@ -105,25 +105,26 @@ export const columns: ColumnDef<Transaction>[] = [
         id: "status",
         header: () => <div className="w-[120px]">Status</div>,
         cell: ({ row }) => {
-            // Prioritize persisted status, then fallback to payment_date check
-            const statusStr = row.original.status
-            const isPaid = !!row.original.date
+            const statusValue = row.original.status || "Pendente"
+            const dateStr = row.original.date
 
-            let status: "Pendente" | "Realizado" | "Agendado" | "Atrasado" = "Pendente"
+            // Logic to refine status based on date if it's currently "Pendente"
+            let refinedStatus: "Pendente" | "Realizado" | "Agendado" | "Atrasado" = statusValue as any
 
-            if (statusStr === 'Realizado' || statusStr === 'paid' || isPaid) {
-                status = "Realizado"
-            } else if (statusStr === 'Pendente' || statusStr === 'pending') {
-                status = "Pendente"
-            } else if (statusStr === 'Agendado') {
-                status = "Agendado"
-            } else if (statusStr === 'Atrasado') {
-                status = "Atrasado"
+            if (statusValue === "Pendente" && dateStr) {
+                const today = new Date().toISOString().split('T')[0]
+                if (dateStr > today) {
+                    refinedStatus = "Agendado"
+                } else if (dateStr < today) {
+                    refinedStatus = "Atrasado"
+                }
+            } else if (statusValue === "Realizado") {
+                refinedStatus = "Realizado"
             }
 
             return (
                 <div className="w-[120px]">
-                    <StatusIndicator status={status} />
+                    <StatusIndicator status={refinedStatus} />
                 </div>
             )
         },

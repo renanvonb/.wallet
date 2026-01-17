@@ -114,9 +114,9 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     const categoryData = React.useMemo(() => {
         const categories: Record<string, number> = {}
         filteredData.forEach(t => {
-            if (t.type === 'expense' && t.payment_date) {
+            if (t.type === 'expense' && t.status === 'Realizado') {
                 const name = t.categories?.name || 'Outros'
-                const paidAmount = parseFloat(t.amount) || 0
+                const paidAmount = parseFloat(t.amount as any) || 0
                 categories[name] = (categories[name] || 0) + paidAmount
             }
         })
@@ -130,9 +130,9 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     const subcategoryData = React.useMemo(() => {
         const subcategories: Record<string, number> = {}
         filteredData.forEach(t => {
-            if (t.type === 'expense' && t.payment_date) {
+            if (t.type === 'expense' && t.status === 'Realizado') {
                 const name = t.subcategories?.name || t.categories?.name || 'Outros'
-                const paidAmount = parseFloat(t.amount) || 0
+                const paidAmount = parseFloat(t.amount as any) || 0
                 subcategories[name] = (subcategories[name] || 0) + paidAmount
             }
         })
@@ -147,8 +147,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         const classifications: Record<string, number> = {}
         filteredData.forEach(t => {
             if (t.type === 'expense') {
-                const classification = t.classification || 'necessary'
-                const amount = parseFloat(t.amount) || 0
+                const classification = t.classifications?.name || 'Outros'
+                const amount = parseFloat(t.amount as any) || 0
                 classifications[classification] = (classifications[classification] || 0) + amount
             }
         })
@@ -163,14 +163,15 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         const dailyData: Record<string, { receitas: number; despesas: number }> = {}
 
         filteredData.forEach(t => {
-            const date = parseISO(t.due_date)
+            if (!t.date) return
+            const date = parseISO(t.date)
             const day = format(date, 'd', { locale: ptBR })
 
             if (!dailyData[day]) {
                 dailyData[day] = { receitas: 0, despesas: 0 }
             }
 
-            const amount = parseFloat(t.amount) || 0
+            const amount = parseFloat(t.amount as any) || 0
             if (t.type === 'revenue') {
                 dailyData[day].receitas += amount
             } else if (t.type === 'expense') {
